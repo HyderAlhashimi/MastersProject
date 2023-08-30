@@ -74,6 +74,7 @@ Learn <- function(input1, input2, target) {
     # Compute errors and deltas for back propagation
     error <<- target - output
     deltError <- error * SigmoidPrime(output)
+    
     deltSig1 <- deltError * outputWeights[1] * SigmoidPrime(sig1)
     deltSig2 <- deltError * outputWeights[2] * SigmoidPrime(sig2)
     deltSig3 <- deltError * outputWeights[3] * SigmoidPrime(sig3)
@@ -82,7 +83,7 @@ Learn <- function(input1, input2, target) {
     outputWeights[1] <- outputWeights[1] + (deltError * sig1 * learning_rate)
     outputWeights[2] <- outputWeights[2] + (deltError * sig2 * learning_rate)
     outputWeights[3] <- outputWeights[3] + (deltError * sig3 * learning_rate)
-    outputBias <- outputBias * deltError
+    outputBias <- outputBias + (learning_rate * deltError)
     
     weights1[1] <- weights1[1] + (input1 * deltSig1 * learning_rate)
     weights1[2] <- weights1[2] + (input2 * deltSig1 * learning_rate)
@@ -96,10 +97,10 @@ Learn <- function(input1, input2, target) {
 
 }
 
-inp1 <- c(1, 1)
-inp2 <- c(1, 0)
-inp3 <- c(0, 1)
-inp4 <- c(0, 0)
+inp1 <- c(0, 0)
+inp2 <- c(0, 1)
+inp3 <- c(1, 0)
+inp4 <- c(1, 1)
 INPUTS <- list(inp1, inp2, inp3, inp4)
 
 out1 <- c(0)
@@ -110,7 +111,7 @@ OUTPUTS <- list(out1, out2, out3, out4)
 
 #Training the network
 
-for (epoch in 1:10000) {
+for (epoch in 1:100000) {
     indexes <- c(1, 2, 3, 4)
     indexes <- sample(indexes)
     for (i in indexes) {
@@ -123,7 +124,7 @@ for (epoch in 1:10000) {
             cost <- cost + (OUTPUTS[[i]][1] - o) ** 2
         }
         cost <- cost / 4
-        print(paste("epoch ", epoch, " mean squared error: ", error))
+        print(paste("epoch ", epoch, " mean squared error: ", cost))
     }
 }
 
