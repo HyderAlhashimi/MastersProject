@@ -128,11 +128,13 @@ Learn <- function(inputs, targets) {
             hiddenWeights[[i]][j] <- hiddenWeights[[i]][j] +
                 (LEARNINGRATE * inputs[j] * ds[i])
         }
-        hiddenBias[i] <- hiddenBias <- hiddenBias + (LEARNINGRATE * ds[i])
+        hiddenBias[i] <- hiddenBias[i] + (LEARNINGRATE * ds[i])
     }
 }
 
-
+computeCost <- function(){
+    
+}
 
 
 

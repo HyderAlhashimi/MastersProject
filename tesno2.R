@@ -41,27 +41,25 @@ Predict <- function(inputs) {
     
     inputs <- sapply(inputs, as.numeric)
     
-    hiddens <- c()
+    hiddens <- numeric(HIDDEN)
     for(i in 1:HIDDEN) {
         hidden <- 0
         for(j in 1:INPUTS) {
             hidden <- hidden + (hiddenWeights[[i]][j] * inputs[j])
         }
-        hidden <- Sigmoid(hidden + hiddenBias[i])
-        hiddens <- append(hiddens, hidden)
+        hiddens[i] <- Sigmoid(hidden + hiddenBias[i])
     }
     
-    outputs <- c()
+    outputs <- numeric(OUTPUTS)
     for(i in 1:OUTPUTS) {
         output <- 0
         for(j in 1:HIDDEN) {
             output <- output + (outputWeights[[i]][j] * hiddens[j])
         }
-        output <- Sigmoid(output + outputBias[i])
-        outputs <- append(outputs, output)
+        outputs[i] <- Sigmoid(output + outputBias[i])
     }
     
-    return(output) ##maybe 'outputs' instead
+    return(outputs)
 }
 
 
@@ -70,36 +68,32 @@ Learn <- function(inputs, targets) {
     inputs <- sapply(inputs, as.numeric)
     targets <- sapply(targets, as.numeric)
     
-    hiddens <- c()
+    hiddens <- numeric(HIDDEN)
     for(i in 1:HIDDEN) {
         hidden <- 0
         for(j in 1:INPUTS) {
             hidden <- hidden + (hiddenWeights[[i]][j] * inputs[j])
         }
-        hidden <- Sigmoid(hidden + hiddenBias[i])
-        hiddens <- append(hiddens, hidden)
+        hiddens[i] <- Sigmoid(hidden + hiddenBias[i])
     }
     
-    outputs <- c()
+    outputs <- numeric(OUTPUTS)
     for(i in 1:OUTPUTS) {
         output <- 0
         for(j in 1:HIDDEN) {
             output <- output + (outputWeights[[i]][j] * hiddens[j])
         }
-        output <- Sigmoid(output + outputBias[i])
-        outputs <- append(outputs, output)
+        outputs[i] <- Sigmoid(output + outputBias[i])
     }
     
-    errors <- c()
+    errors <- numeric(OUTPUTS)
     for(i in 1:OUTPUTS) {
-        error <- targets[i] - outputs[i]
-        errors <- append(errors, error)
+        errors[i] <- targets[i] - outputs[i]
     }
     
-    derrors <- c()
+    derrors <- numeric(OUTPUTS)
     for(i in 1:OUTPUTS) {
-        derror <- errors[i] * SigmoidPrime(outputs[i])
-        derrors <- append(derrors, derror)
+        derrors[i] <- errors[i] * SigmoidPrime(outputs[i])
     }
     
     ds <- numeric(HIDDEN)
@@ -112,18 +106,20 @@ Learn <- function(inputs, targets) {
     
     for(i in 1:OUTPUTS) {
         for(j in 1:HIDDEN) {
-            outputWeights[[i]][j] <- outputWeights[[i]][j] + 
-                (LEARNINGRATE * hiddens[i] * derrors[i])
+            outputWeights[[i]][j] <<- outputWeights[[i]][j] + 
+                (LEARNINGRATE * hiddens[j] * derrors[i])
         }
+        outputBias[i] <<- outputBias[i] + (LEARNINGRATE * derrors[i])
     }
     
     for(i in 1:HIDDEN) {
         for(j in 1:INPUTS) {
-            hiddenWeights[[i]][j] <- hiddenWeights[[i]][j] +
+            hiddenWeights[[i]][j] <<- hiddenWeights[[i]][j] +
                 (LEARNINGRATE * inputs[j] * ds[i])
         }
-        hiddenBias[i] <- hiddenBias <- hiddenBias + (LEARNINGRATE * ds[i])
+        hiddenBias[i] <<- hiddenBias[i] + (LEARNINGRATE * ds[i])
     }
+
 }
 
 
@@ -171,5 +167,6 @@ for (i in 1:4) {
                 " predicted: ", format(result, nsmall = 4), "which is "
                 , compare))
 }
+
 
 
