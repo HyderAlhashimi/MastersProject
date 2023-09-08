@@ -1,19 +1,13 @@
 library(matlab)
 library(png)
 library(caret)
-library(magick)
-library(image.ContourDetector)
-library(plot.matrix)
 
 VARIANCE <- 0.5
 
-IMAGE_HEIGHT <- 28
-IMAGE_WIDTH <- 28
-
-INPUTS <- IMAGE_HEIGHT * IMAGE_WIDTH
+INPUTS <- 2352
 HIDDEN <- 16
-OUTPUTS <- 1
-LEARNINGRATE <- 0.01
+OUTPUTS <- 2
+LEARNINGRATE <- 0.1
 
 hiddenWeights <- vector("list", HIDDEN)
 
@@ -31,16 +25,13 @@ for(i in seq_along(outputWeights)) {
 
 outputBias <- numeric(OUTPUTS)
 
-
-Sigmoid <- function(x) {
-    return(1 / (1 + exp(-x)))
+ReLU <- function(x) {
+    return(pmax(0, x))
 }
 
-
-SigmoidPrime <- function(x) {
-    return(x * (1 - x))
+ReLUPrime <- function(x) {
+    return(ifelse(x > 0, 1, 0))
 }
-
 
 Predict <- function(inputs) {
     
@@ -50,7 +41,7 @@ Predict <- function(inputs) {
         for(j in 1:INPUTS) {
             hidden <- hidden + (hiddenWeights[[i]][j] * inputs[j])
         }
-        hiddens[i] <- Sigmoid(hidden + hiddenBias[i])
+        hiddens[i] <- ReLU(hidden + hiddenBias[i])
     }
     
     outputs <- numeric(OUTPUTS)
@@ -73,7 +64,7 @@ Learn <- function(inputs, targets) {
         for(j in 1:INPUTS) {
             hidden <- hidden + (hiddenWeights[[i]][j] * inputs[j])
         }
-        hiddens[i] <- Sigmoid(hidden + hiddenBias[i])
+        hiddens[i] <- ReLU(hidden + hiddenBias[i])
     }
     
     outputs <- numeric(OUTPUTS)
@@ -123,20 +114,15 @@ Learn <- function(inputs, targets) {
 
 
 folderpath <- "./shapes/"
-shapes <- c("circles", "squares", "triangles")
 
 LoadImages <- function(folderpath) {
+    shapes <- c("circles", "triangles")
     imageData <- list()
     for(shape in shapes) {
         for(i in 1:length(list.files(paste0(folderpath, shape)))) {
             filepath <- paste0(folderpath, shape)
-            image <- image_read(paste0(filepath, "/drawing(", i, ").png"))
-            image <- image_convert(image, type = "Grayscale")
-            image <- as.integer(image[[1]])
-            image <- image / 255
-            #img_mat <- apply(image, 2, c)
+            image <- readPNG(paste0(filepath, "/drawing(", i,").png"))
             imageData[[paste0(shape, "_", i)]] <- image
-            #image(img_mat, col  = gray((0:255)/255))
         }
     }
     return(imageData)
@@ -144,19 +130,20 @@ LoadImages <- function(folderpath) {
 
 imageData <- LoadImages(folderpath)
 
-labels <- ifelse(startsWith(names(imageData), "circles"), 1, 0)
 
-for(epoch in 1:3000) {
+labels <- rep(1:OUTPUTS, each = 100)
+
+for (epoch in 1:20) {
     print(epoch)
     indexes <- sample(1:length(imageData))
-    for(i in indexes) {
+    for (i in indexes) {
         input <- imageData[[i]]
         output <- labels[i]
         Learn(input, output)
     }
     if (epoch %% 1 == 0) {
         cost <- 0
-        for(i in 1:length(imageData)) {
+        for (i in 1:length(imageData)) {
             input <- imageData[[i]]
             target <- labels[i]
             o <- Predict(input)
@@ -169,11 +156,10 @@ for(epoch in 1:3000) {
 
 predictedLabelList <- c()
 
-for(i in 1:length(imageData)) {
+for (i in 1:length(imageData)) {
     input <- imageData[[i]]
     result <- Predict(input)
-    print(result)
-    predictedLabel <- round(result)
+    predictedLabel <- which.max(result)
     predictedLabelList <- append(predictedLabelList, predictedLabel)
     trueLabel <- labels[i]
     compare <- ifelse(predictedLabel == trueLabel, "correct", "incorrect")
@@ -181,6 +167,7 @@ for(i in 1:length(imageData)) {
                 "true:", trueLabel, "which is" , compare))
 }
 
-confusionMatrix(data = as.factor(predictedLabelList), 
-                reference = as.factor(labels))
+confusionMatrix(data = as.factor(predictedLabelList), reference = as.factor(labels))
+
+
 
