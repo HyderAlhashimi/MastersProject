@@ -122,13 +122,6 @@ Learn <- function(inputs, targets) {
 
 }
 
-
-
-
-
-
-
-
 inp1 <- c(0, 0)
 inp2 <- c(0, 1)
 inp3 <- c(1, 0)
