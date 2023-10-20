@@ -1,45 +1,47 @@
-# Load necessary libraries
-library(png)                  
-library(caret)                
-library(magick)               
-library(image.ContourDetector) 
-library(plot.matrix)          
+# Load required libraries
+library(png)
+library(caret)
+library(magick)
+library(plot.matrix)
 
-# Hyper parameters and Constants
-VARIANCE <- 0.5               # Variance for weight initialization
-IMAGE_HEIGHT <- 28            # Height of input images
-IMAGE_WIDTH <- 28             # Width of input images
-INPUTS <- IMAGE_HEIGHT * IMAGE_WIDTH  # Number of input neurons
-HIDDEN <- 16                  # Number of hidden neurons
-OUTPUTS <- 1                  # Number of output neurons
-LEARNINGRATE <- 0.01          # Learning rate for weight updates
+# Define hyperparameters and constants
+VARIANCE <- 0.5  # Variance for weight initialization
+IMAGE_HEIGHT <- 28  # Height of input images
+IMAGE_WIDTH <- 28  # Width of input images
+INPUTS <- IMAGE_HEIGHT * IMAGE_WIDTH  # Total number of input neurons
+HIDDEN <- 16  # Number of hidden neurons
+OUTPUTS <- 1  # Number of output neurons
+LEARNINGRATE <- 0.01  # Learning rate
 
-# Initialize weights for the hidden layer
+# Set random seed for reproducibility
+set.seed(16)
+
+# Initialize weights for hidden layer
 hiddenWeights <- vector("list", HIDDEN)
 for(i in seq_along(hiddenWeights)) {
     hiddenWeights[[i]] <- runif(INPUTS, -VARIANCE, VARIANCE)
 }
 
-# Initialize biases for the hidden layer
+# Initialize biases for hidden layer
 hiddenBias <- numeric(HIDDEN)
 
-# Initialize weights for the output layer
+# Initialize weights for output layer
 outputWeights <- vector("list", HIDDEN)
 for(i in seq_along(outputWeights)) {
     outputWeights[[i]] <- runif(HIDDEN, -VARIANCE, VARIANCE)
 }
 
-# Initialize biases for the output layer
+# Initialize biases for output layer
 outputBias <- numeric(OUTPUTS)
 
-# Sigmoid activation function
+# Define Sigmoid activation function
 Sigmoid <- function(x) {
-    return(1 / (1 + exp(-x)))
+    1 / (1 + exp(-x))
 }
 
-# Derivative of the Sigmoid activation function
+# Define derivative of Sigmoid function
 SigmoidPrime <- function(x) {
-    return(x * (1 - x))
+    x * (1 - x)
 }
 
 # Function to predict the output for given inputs

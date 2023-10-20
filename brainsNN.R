@@ -1,47 +1,47 @@
-# Load necessary libraries
-library(png)                  
-library(caret)                
-library(magick)               
-library(image.ContourDetector) 
-library(plot.matrix)          
+# Load required libraries
+library(png)
+library(caret)
+library(magick)
+library(plot.matrix)
 
-# Hyper parameters and Constants
-VARIANCE <- 0.5               # Variance for weight initialization
-IMAGE_HEIGHT <- 128            # Height of input images
-IMAGE_WIDTH <- 128             # Width of input images
-INPUTS <- IMAGE_HEIGHT * IMAGE_WIDTH  # Number of input neurons
-HIDDEN <- 16                  # Number of hidden neurons
-OUTPUTS <- 1                  # Number of output neurons
-LEARNINGRATE <- 0.2          # Learning rate for weight updates
+# Define hyperparameters and constants
+VARIANCE <- 0.5  # Variance for weight initialization
+IMAGE_HEIGHT <- 128  # Height of input images
+IMAGE_WIDTH <- 128  # Width of input images
+INPUTS <- IMAGE_HEIGHT * IMAGE_WIDTH  # Total number of input neurons
+HIDDEN <- 12  # Number of hidden neurons
+OUTPUTS <- 1  # Number of output neurons
+LEARNINGRATE <- 0.2  # Learning rate
 
+# Set random seed for reproducibility
 set.seed(16)
 
-# Initialize weights for the hidden layer
+# Initialize weights for hidden layer
 hiddenWeights <- vector("list", HIDDEN)
 for(i in seq_along(hiddenWeights)) {
     hiddenWeights[[i]] <- runif(INPUTS, -VARIANCE, VARIANCE)
 }
 
-# Initialize biases for the hidden layer
+# Initialize biases for hidden layer
 hiddenBias <- numeric(HIDDEN)
 
-# Initialize weights for the output layer
+# Initialize weights for output layer
 outputWeights <- vector("list", HIDDEN)
 for(i in seq_along(outputWeights)) {
     outputWeights[[i]] <- runif(HIDDEN, -VARIANCE, VARIANCE)
 }
 
-# Initialize biases for the output layer
+# Initialize biases for output layer
 outputBias <- numeric(OUTPUTS)
 
-# Sigmoid activation function
+# Define Sigmoid activation function
 Sigmoid <- function(x) {
-    return(1 / (1 + exp(-x)))
+    1 / (1 + exp(-x))
 }
 
-# Derivative of the Sigmoid activation function
+# Define derivative of Sigmoid function
 SigmoidPrime <- function(x) {
-    return(x * (1 - x))
+    x * (1 - x)
 }
 
 # Function to predict the output for given inputs
@@ -131,7 +131,7 @@ Learn <- function(inputs, targets) {
     }
 }
 
-# Folder containing shape images
+# Folder containing Brain MRI images
 trainfolderpath <- "./braintumor/Training/"
 testfolderpath <- "./braintumor/Testing/"
 brains <- c("notumor", "glioma", "meningioma", "pituitary")
@@ -166,8 +166,10 @@ testlabels <- ifelse(startsWith(names(testImageData), "Te-no"), 1, 0)
 # Create labels (1 for circles, 0 for non-circles)
 trainlabels <- ifelse(startsWith(names(trainImageData), "Tr-no"), 1, 0)
 
+costList <- c()
+
 # Training loop
-for(epoch in 1:100) {
+for(epoch in 1:15) {
     # Randomly shuffle the dataset
     indexes <- sample(1:length(trainImageData))
     print(epoch)
@@ -176,7 +178,7 @@ for(epoch in 1:100) {
         output <- trainlabels[i]
         Learn(input, output)
     }
-    if (epoch %% 10 == 0) {
+    if (epoch %% 1 == 0) {
         cost <- 0
         # Calculate mean squared error
         for(i in 1:length(trainImageData)) {
@@ -187,15 +189,18 @@ for(epoch in 1:100) {
         }
         cost <- cost / INPUTS
         print(paste("epoch", epoch, "mean squared error:", cost))
+        costList <- append(costList, cost)
     }
 }
 
 # Predict labels for images and evaluate
 predictedLabelList <- c()
+probabilityList <- c()
 
 for(i in 1:length(testImageData)) {
     input <- testImageData[[i]]
     result <- Predict(input)
+    probabilityList <- append(probabilityList, result)
     predictedLabel <- round(result)
     predictedLabelList <- append(predictedLabelList, predictedLabel)
     trueLabel <- testlabels[i]
@@ -206,4 +211,24 @@ for(i in 1:length(testImageData)) {
 
 # Generate a confusion matrix for evaluation
 confusionMatrix(data = as.factor(predictedLabelList), 
-                reference = as.factor(testlabels))
+               reference = as.factor(testlabels), 
+               mode = "everything", positive = "1")
+
+# Plot an ROC curve
+library(pROC)
+par(pty = "s")
+roc(testlabels, probabilityList, plot = TRUE, legacy.axes = TRUE,
+    col = "#00008B", lwd = 4, percent = TRUE, print.auc = TRUE, print.auc.x = 45)
+
+# Plot the MSE over 15 epochs
+
+epochList <- 1:15
+costDf <- data.frame(epochList, costList)
+
+ggplot(costDf, aes(x = epochList, y = costList)) +
+    geom_line(color = "#69b3a2", linewidth = 1, alpha = 0.9, linetype = 1) +
+    scale_x_continuous(breaks = seq(1, 15)) +
+    scale_y_continuous(breaks = seq(0, 0.07, by = 0.01)) +
+    theme_gray(base_size = 16) +
+    xlab("Epoch") + 
+    ylab("Mean Squared Error") 
